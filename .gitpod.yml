@@ -1,0 +1,16 @@
+tasks:
+  - name: Create Environment
+    init: |
+      python3 -m venv .venv
+      source .venv/bin/activate
+      export PIP_USER=false
+      pip install -U pip
+      pip install -U setuptools
+  - name: Create Environment
+    command: |
+      source .venv/bin/activate
+      export PIP_USER=false
+vscode:
+  extensions:
+    - ms-python.python
+    - ms-toolsai.jupyter
