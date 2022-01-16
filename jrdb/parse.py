@@ -1,8 +1,8 @@
 import re
-import numpy as np
 import pandas as pd
 
 from jrdb import load
+
 
 class JrdbDataParser():
     def __init__(self):
@@ -17,11 +17,12 @@ class JrdbDataParser():
         formater = JrdbDataFrameFormatter(df, config_json)
         return formater.format_dataframe()
 
+
 class JrdbTextConverterIntoDataFrame():
     def __init__(self, text_data, config_json):
-        self._text_data      = text_data
-        self._config_json    = config_json
-        self._keys           = config_json.keys()
+        self._text_data = text_data
+        self._config_json = config_json
+        self._keys = config_json.keys()
 
     def convert_text_into_dataframe(self):
         df = self._generate_dataframe_for_data_strage()
@@ -29,20 +30,22 @@ class JrdbTextConverterIntoDataFrame():
 
     def _generate_dataframe_for_data_strage(self):
         data_list = [['' for column in range(len(self._keys))] for row in range(len(self._text_data))]
-        return pd.DataFrame(data_list, columns = self._keys)
+        return pd.DataFrame(data_list, columns=self._keys)
 
     def _store_data(self, df):
         for key in self._keys:
             for row in range(len(df)):
-                encode_text = self._text_data[row].encode(encoding = 'shift_jisx0213')
-                df.at[row, key] = encode_text[self._config_json[key]['start_ind_b'] : self._config_json[key]['end_ind_b']].decode(encoding = 'shiftjisx0213')
+                encode_text = self._text_data[row].encode(encoding='ms932')
+                df.at[row, key] = encode_text[self._config_json[key]['start_ind_b']: self._config_json[key]['end_ind_b']].decode(encoding='ms932')
         return df
 
+
 def validate_blank(text):
-    if re.search('^\s+$', text):
+    if re.search(r'^\s+$', text):
         return True
     else:
         return False
+
 
 def remove_blank(text):
     """
@@ -54,8 +57,9 @@ def remove_blank(text):
         '6'
     """
     if validate_blank(text):
-        return None 
-    return re.sub('\s', '', text)
+        return None
+    return re.sub(r'\s', '', text)
+
 
 def bring_to_head_sign(text):
     """
@@ -66,11 +70,12 @@ def bring_to_head_sign(text):
     >>> bring_to_head_sign(' -6')
         '- 6'
     """
-    symbol_ind = re.search('-|\+', text).start()
+    symbol_ind = re.search(r'-|\+', text).start()
     text = list(text)
     text[0], text[symbol_ind] = text[symbol_ind], text[0]
     text = ''.join(text)
     return text
+
 
 def blank_to_zero(text):
     """
@@ -82,9 +87,10 @@ def blank_to_zero(text):
         '006'
     """
     if validate_blank(text):
-        return None 
+        return None
     else:
-        return re.sub('\s', '0', text)
+        return re.sub(r'\s', '0', text)
+
 
 def str_to_float(text):
     """
@@ -102,10 +108,11 @@ def str_to_float(text):
     else:
         try:
             text = bring_to_head_sign(text)
-        except:
+        except Exception:
             pass
         text = blank_to_zero(text)
         return float(text[0:2]) + float(text[2])/10
+
 
 def time_to_seconds(text):
     """
@@ -121,15 +128,14 @@ def time_to_seconds(text):
         return None
     else:
         text = blank_to_zero(text)
-        text_len = len(text)
         return float(text[0])*60 + float(text[1:3]) + float(text[3])/10
 
 
 class JrdbDataFrameFormatter():
     def __init__(self, dataframe, config_json):
-        self._data           = dataframe
-        self._config_json    = config_json
-        self._keys           = config_json.keys()
+        self._data = dataframe
+        self._config_json = config_json
+        self._keys = config_json.keys()
 
     def format_dataframe(self):
         ret_dataframe = self._data.copy()
@@ -139,6 +145,7 @@ class JrdbDataFrameFormatter():
             target_var_type = self._config_json[key]['var_type']
             ret_dataframe[key] = target_series.correct_str_series(target_var_function, target_var_type)
         return ret_dataframe
+
 
 class JrdbCorrectStrSeries():
     def __init__(self, series):
@@ -155,7 +162,7 @@ class JrdbCorrectStrSeries():
                 ret_series = self._str_to_float_series(ret_series)
             elif var_function == 'time_to_seconds_series':
                 ret_series = self._time_to_seconds_series(ret_series)
-        except:
+        except Exception:
             pass
         ret_series = self._convert_var_type(ret_series, var_type)
         return ret_series
@@ -177,5 +184,3 @@ class JrdbCorrectStrSeries():
         type_converted_series = ret_series.fillna(0).astype(var_type)
         ret_series.loc[ret_series.notnull()] = type_converted_series
         return ret_series
-        
-

@@ -1,0 +1,5 @@
+azure-core
+azure-storage
+pandas
+requests
+lhafile
